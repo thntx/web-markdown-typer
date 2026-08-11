@@ -1,28 +1,69 @@
-# Editor de Markdown (GitHub Pages)
+# Web Markdown Typer
 
-Editor de Markdown lleuger, minimalista i sense servidor dissenyat per executar-se directament a **GitHub Pages**.
+A lightweight, serverless, distraction-free Markdown editor built for seamless auto-saving and instant deployment on **GitHub Pages**.
 
-## 🚀 Característiques
+![License](https://img.shields.io/badge/license-MIT-blue.svg)
+![Status](https://img.shields.io/badge/status-active-brightgreen.svg)
 
-- **100% Sense Servidor**: No requereix cap backend Node.js. Funciona directament en qualsevol navegador.
-- **Autoguardat a `localStorage`**: Desa automàticament qualsevol canvi després de 500 ms d'inactivitat.
-- **Autoguardat a Disc (File System Access API)**: Permet vincular l'editor amb un fitxer `.md` local del teu ordinador per desar els canvis directament al teu disc dur en temps real.
-- **Formatat en Temps Real**: Reconeixement de capçaleres, llistes, negreta, cursiva, codi i cites sense perdre la posició del cursor.
-- **Comptador**: Mostra en temps real les paraules i els caràcters escrits.
-- **Exportació**: Botó per carregar fitxers o descarregar el contingut actual en format `.md`.
+---
 
-## 📦 Com publicar a GitHub Pages
+## ✨ Features
 
-1. Crea un nou repositori públic o privat a [GitHub](https://github.com/new).
-2. Puja aquest repositori des de la teva terminal:
+- ⚡ **100% Serverless**: No Node.js backend required. Runs directly in any modern browser.
+- 💾 **Real-Time Auto-Save (`localStorage`)**: Automatically saves your document to `localStorage` 500ms after you stop typing.
+- 📁 **Direct Local File Auto-Save (File System Access API)**: Link your document to a local `.md` file on your computer and automatically save changes directly to your disk in real time.
+- 🎨 **Live Markdown Formatting**: Real-time styling for headers (`#`), blockquotes (`>`), lists (`-`, `*`, `1.`), bold (`**`), italic (`*`), code (`` ` ``), and strikethrough (`~~`) without jumping caret position.
+- 📊 **Live Document Statistics**: Real-time word and character counter in the header.
+- ⬇️ **Import & Export**: Open existing `.md` files or download your notes anytime with a single click.
+- 🌙 **Distraction-Free Dark Mode**: Clean, accessible, modern typography tuned for focused writing.
+
+---
+
+## 🚀 Live Demo
+
+Access the live web application here:  
+👉 **[https://thntx.github.io/web-markdown-typer/](https://thntx.github.io/web-markdown-typer/)**
+
+---
+
+## 💻 How It Works
+
+### Auto-Saving Modes
+
+1. **`localStorage` (Default)**:
+   Every keystroke triggers a debounced (500ms) save to your browser's local storage. Your content persists across page reloads and browser sessions.
+
+2. **Local File Link (File System Access API)**:
+   Click **`💾 Vincular fitxer local` / `Link Local File`** to select or create a `.md` file on your computer. When linked, every auto-save automatically updates the file on your hard drive (supported in Chromium browsers: Chrome, Edge, Brave, Opera).
+
+---
+
+## 🛠️ Local Development & Deployment
+
+### Running Locally
+Since the application is purely static HTML, CSS, and JavaScript, you can open `index.html` directly in your browser or serve it using any static web server:
+
+```bash
+# Using python
+python -m http.server 8000
+
+# Or using npx
+npx serve .
+```
+
+### Deploying to GitHub Pages
+
+1. Push your changes to the `main` branch:
    ```bash
-   git init
    git add .
-   git commit -m "Initial commit: Serverless Markdown Editor"
-   git branch -M main
-   git remote add origin https://github.com/EL_TEU_USUARI/EL_TEU_REPO.git
-   git push -u origin main
+   git commit -m "Update README and project documentation"
+   git push origin main
    ```
-3. A GitHub, ves a **Settings** > **Pages**.
-4. A **Source**, selecciona `Deploy from a branch` i tria la branca `main` / `root`.
-5. Fes clic a **Save**. En uns segons la teva aplicació estarà online i accessible globalment!
+2. In your GitHub repository settings, navigate to **Settings** > **Pages**.
+3. Under **Build and deployment**, select `Deploy from a branch` and set the branch to `main` and path to `/ (root)`.
+
+---
+
+## 📄 License
+
+This project is open-source and available under the [MIT License](LICENSE).
