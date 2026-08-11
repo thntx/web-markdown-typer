@@ -1,150 +1,38 @@
 <!DOCTYPE html>
-<html lang="ca">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Editor de Markdown</title>
+    <title>Simple Markdown Editor</title>
     <style>
-        :root {
-            --bg: #121212;
-            --surface: #1e1e1e;
-            --surface-border: rgba(255, 255, 255, 0.1);
-            --text: #f0f0f0;
-            --text-dim: #888888;
-            --accent: #4a90e2;
-            --accent-green: #4cae50;
-        }
+        :root { --bg: #121212; --text: #f0f0f0; }
 
         *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 
-        html, body {
-            height: 100%;
-            background: var(--bg);
-            color: var(--text);
-            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-            overflow: hidden;
-            display: flex;
-            flex-direction: column;
-        }
+        html { height: 100%; }
 
-        /* Header Toolbar */
-        header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 10px 24px;
-            background: var(--surface);
-            border-bottom: 1px solid var(--surface-border);
-            user-select: none;
-            z-index: 10;
-            gap: 12px;
-            flex-wrap: wrap;
-        }
-
-        .header-title-container {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
-        .header-title {
-            font-weight: 600;
-            font-size: 0.95rem;
-            letter-spacing: 0.02em;
-            color: var(--text);
-        }
-
-        .status-badge {
-            font-size: 0.75rem;
-            padding: 3px 8px;
-            border-radius: 12px;
-            background: rgba(255, 255, 255, 0.06);
-            color: var(--text-dim);
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            transition: all 0.2s ease;
-        }
-
-        .status-badge.saved {
-            color: var(--accent-green);
-            background: rgba(76, 174, 80, 0.12);
-        }
-
-        .status-dot {
-            width: 6px;
-            height: 6px;
-            border-radius: 50%;
-            background: currentColor;
-        }
-
-        .stats-counter {
-            font-size: 0.75rem;
-            color: var(--text-dim);
-        }
-
-        .toolbar-actions {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .btn {
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid var(--surface-border);
-            color: var(--text);
-            padding: 6px 12px;
-            border-radius: 6px;
-            font-size: 0.8rem;
-            font-weight: 500;
-            cursor: pointer;
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            transition: background 0.15s ease, border-color 0.15s ease;
-        }
-
-        .btn:hover {
-            background: rgba(255, 255, 255, 0.12);
-            border-color: rgba(255, 255, 255, 0.2);
-        }
-
-        .btn-primary {
-            background: var(--accent);
-            border-color: var(--accent);
-            color: #ffffff;
-        }
-
-        .btn-primary:hover {
-            background: #3b7dc9;
-            border-color: #3b7dc9;
-        }
-
-        /* Main Editor Layout */
-        main {
-            flex: 1;
-            display: flex;
-            justify-content: center;
+        body {
+            min-height: 100%;
+            background: var(--bg); color: var(--text);
+            display: flex; justify-content: center;
             overflow-y: auto;
-            padding: 40px 20px;
         }
 
         #editor {
-            width: 100%;
-            max-width: 800px;
+            width: 100%; max-width: 800px;
+            padding: 40px 20px;
             font-family: Georgia, "Times New Roman", serif;
-            font-size: 1.35rem;
-            line-height: 1.5;
+            font-size: 1.5rem;
+            line-height: 1.3;
             outline: none;
             caret-color: var(--text);
             text-align: justify;
-            min-height: 80vh;
         }
 
         #editor > div { margin-bottom: 0.6em; min-height: 1.3em; }
 
         #editor[data-empty="true"]::before {
-            content: "Comença a escriure en markdown...";
+            content: "Start typing...";
             color: #444;
             pointer-events: none;
             position: absolute;
@@ -152,76 +40,44 @@
 
         /* Dimmed markdown syntax */
         .md-syntax {
-            opacity: 0.25;
-            font-size: 0.8em;
+            opacity: 0.2;
+            font-size: 0.75em;
             font-weight: normal;
             font-style: normal;
         }
 
-        /* Block-level styles */
-        .line-h1 { font-size: 2em; font-weight: bold; line-height: 1.15; margin-top: 0.5em; }
-        .line-h2 { font-size: 1.4em; font-weight: bold; line-height: 1.2; margin-top: 0.4em; }
-        .line-h3 { font-size: 1.2em; font-weight: bold; line-height: 1.25; }
-        .line-bq { border-left: 3px solid #555; padding-left: 0.8em; color: #aaa; }
+        /* Block-level */
+        .line-h1 { font-size: 2em; font-weight: bold; line-height: 1.1; }
+        .line-h2 { font-size: 1.3em; font-weight: bold; line-height: 1.15; }
+        .line-h3 { font-size: 1.3em; font-weight: bold; line-height: 1.2; }
+        .line-bq { border-left: 3px solid #444; padding-left: 0.8em; color: #999; }
         .line-li { padding-left: 0.5em; }
 
-        /* Inline styles */
+        /* Inline */
         .md-bold { font-weight: bold; }
         .md-italic { font-style: italic; }
         .md-code {
             font-family: Consolas, "Courier New", monospace;
-            background: rgba(255, 255, 255, 0.08);
+            background: rgba(255,255,255,0.07);
             padding: 0.1em 0.35em;
             border-radius: 3px;
-            font-size: 0.85em;
+            font-size: 0.9em;
         }
         .md-strike { text-decoration: line-through; opacity: 0.6; }
 
-        /* Custom Scrollbar */
-        main::-webkit-scrollbar { width: 8px; }
-        main::-webkit-scrollbar-track { background: var(--bg); }
-        main::-webkit-scrollbar-thumb { background: #2a2a2a; border-radius: 4px; }
-        main::-webkit-scrollbar-thumb:hover { background: #3a3a3a; }
+        /* Scrollbar */
+        body::-webkit-scrollbar { width: 6px; }
+        body::-webkit-scrollbar-track { background: var(--bg); }
+        body::-webkit-scrollbar-thumb { background: #2a2a2a; border-radius: 3px; }
     </style>
 </head>
 <body>
-
-    <header>
-        <div class="header-title-container">
-            <span class="header-title">📝 Editor Markdown</span>
-            <span id="statusBadge" class="status-badge saved">
-                <span class="status-dot"></span>
-                <span id="statusText">Guardat a localStorage</span>
-            </span>
-        </div>
-
-        <div class="toolbar-actions">
-            <span id="statsCounter" class="stats-counter">0 paraules · 0 caràcters</span>
-            <button id="btnOpen" class="btn" title="Obrir fitxer local (.md)">📂 Obrir fitxer</button>
-            <button id="btnLink" class="btn btn-primary" title="Vincular i desar en un fitxer local en temps real">💾 Vincular fitxer local</button>
-            <button id="btnExport" class="btn" title="Descarregar com a notes.md">⬇️ Descarregar .md</button>
-        </div>
-    </header>
-
-    <main>
-        <div id="editor" contenteditable="true" role="textbox" aria-multiline="true" spellcheck="true" lang="ca" data-empty="true"></div>
-    </main>
-
-    <input type="file" id="fallbackFileInput" accept=".md,.txt,.markdown" style="display:none">
+    <div id="editor" contenteditable="true" role="textbox" aria-multiline="true" spellcheck="true" lang="en" data-empty="true"></div>
 
     <script>
         const editor = document.getElementById('editor');
-        const statusBadge = document.getElementById('statusBadge');
-        const statusText = document.getElementById('statusText');
-        const statsCounter = document.getElementById('statsCounter');
-        const btnOpen = document.getElementById('btnOpen');
-        const btnLink = document.getElementById('btnLink');
-        const btnExport = document.getElementById('btnExport');
-        const fallbackFileInput = document.getElementById('fallbackFileInput');
-
         const STORAGE_KEY = 'simple_editor_content';
         let saveTimeout;
-        let fileHandle = null; // File System Access API handle
 
         document.execCommand('defaultParagraphSeparator', false, 'div');
 
@@ -284,7 +140,7 @@
             let prefix = '';
             let content = raw;
 
-            // Block-level patterns
+            // Block-level patterns (checked on raw text)
             const blocks = [
                 [/^(#{1,6}) (.*)$/, m => {
                     cls = 'line-h' + Math.min(m[1].length, 3);
@@ -352,52 +208,21 @@
             restoreCaretPos(block, caret);
         }
 
-        // ---- Placeholder & Stats ----
+        // ---- Placeholder ----
 
-        function updatePlaceholderAndStats() {
-            const text = editor.textContent;
-            editor.setAttribute('data-empty', text.trim() === '' ? 'true' : 'false');
-
-            const words = text.trim() ? text.trim().split(/\s+/).length : 0;
-            const chars = text.length;
-            statsCounter.textContent = `${words} paraules · ${chars} caràcters`;
+        function updatePlaceholder() {
+            editor.setAttribute('data-empty', editor.textContent.trim() === '' ? 'true' : 'false');
         }
 
-        // ---- Save / Load Core ----
+        // ---- Save / Load ----
 
         function getMarkdown() {
             return Array.from(editor.children).map(b => b.textContent).join('\n\n');
         }
 
-        async function saveContent() {
+        function saveContent() {
             const md = getMarkdown();
-            
-            // Always save to localStorage
             localStorage.setItem(STORAGE_KEY, md);
-
-            // If a local file is linked via File System Access API, write to it
-            if (fileHandle) {
-                try {
-                    const writable = await fileHandle.createWritable();
-                    await writable.write(md);
-                    await writable.close();
-                    updateStatus(`Guardat a ${fileHandle.name}`, true);
-                } catch (err) {
-                    console.error('Error guardant a disc:', err);
-                    updateStatus('Guardat a localStorage (error disc)', true);
-                }
-            } else {
-                updateStatus('Guardat a localStorage', true);
-            }
-        }
-
-        function updateStatus(message, isSaved = true) {
-            statusText.textContent = message;
-            if (isSaved) {
-                statusBadge.classList.add('saved');
-            } else {
-                statusBadge.classList.remove('saved');
-            }
         }
 
         function loadIntoEditor(md) {
@@ -406,7 +231,7 @@
                 const div = document.createElement('div');
                 div.innerHTML = '<br>';
                 editor.appendChild(div);
-                updatePlaceholderAndStats();
+                updatePlaceholder();
                 return;
             }
             md.split(/\n/).filter(l => l.trim() !== '').forEach(line => {
@@ -415,14 +240,13 @@
                 editor.appendChild(div);
                 decorateBlock(div);
             });
-            updatePlaceholderAndStats();
+            updatePlaceholder();
         }
 
-        // ---- Initial Load (localStorage) ----
-        const savedInitial = localStorage.getItem(STORAGE_KEY) || '';
-        loadIntoEditor(savedInitial);
+        // Auto-load on init from localStorage
+        loadIntoEditor(localStorage.getItem(STORAGE_KEY) || '');
 
-        // ---- Input Handlers ----
+        // ---- Input handler ----
 
         editor.addEventListener('input', (e) => {
             const block = getActiveBlock();
@@ -434,8 +258,7 @@
                 decorateBlock(block);
             }
 
-            updatePlaceholderAndStats();
-            updateStatus('Escrivint...', false);
+            updatePlaceholder();
             clearTimeout(saveTimeout);
             saveTimeout = setTimeout(saveContent, 500);
         });
@@ -466,84 +289,15 @@
             const block = getActiveBlock();
             if (block) decorateBlock(block);
 
-            updateStatus('Escrivint...', false);
             clearTimeout(saveTimeout);
             saveTimeout = setTimeout(saveContent, 500);
         });
 
-        // ---- Paste Plain Text ----
+        // ---- Paste as plain text ----
 
         editor.addEventListener('paste', (e) => {
             e.preventDefault();
             document.execCommand('insertText', false, e.clipboardData.getData('text/plain'));
-        });
-
-        // ---- File Actions (File System Access API & Fallbacks) ----
-
-        btnOpen.addEventListener('click', async () => {
-            if ('showOpenFilePicker' in window) {
-                try {
-                    const [handle] = await window.showOpenFilePicker({
-                        types: [{
-                            description: 'Fitxers Markdown',
-                            accept: { 'text/markdown': ['.md', '.markdown', '.txt'] }
-                        }],
-                        multiple: false
-                    });
-                    fileHandle = handle;
-                    const file = await fileHandle.getFile();
-                    const text = await file.text();
-                    loadIntoEditor(text);
-                    await saveContent();
-                } catch (err) {
-                    if (err.name !== 'AbortError') console.error(err);
-                }
-            } else {
-                fallbackFileInput.click();
-            }
-        });
-
-        fallbackFileInput.addEventListener('change', (e) => {
-            const file = e.target.files[0];
-            if (!file) return;
-            const reader = new FileReader();
-            reader.onload = (evt) => {
-                loadIntoEditor(evt.target.result);
-                saveContent();
-            };
-            reader.readAsText(file);
-        });
-
-        btnLink.addEventListener('click', async () => {
-            if ('showSaveFilePicker' in window) {
-                try {
-                    const handle = await window.showSaveFilePicker({
-                        suggestedName: 'notes.md',
-                        types: [{
-                            description: 'Fitxer Markdown',
-                            accept: { 'text/markdown': ['.md'] }
-                        }]
-                    });
-                    fileHandle = handle;
-                    await saveContent();
-                } catch (err) {
-                    if (err.name !== 'AbortError') console.error(err);
-                }
-            } else {
-                alert("El teu navegador utilitzarà el descarregador. Per autoguardat directe a disc es recomana un navegador basat en Chromium (Chrome, Edge, Brave).");
-                btnExport.click();
-            }
-        });
-
-        btnExport.addEventListener('click', () => {
-            const md = getMarkdown();
-            const blob = new Blob([md], { type: 'text/markdown;charset=utf-8' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = fileHandle ? fileHandle.name : 'notes.md';
-            a.click();
-            URL.revokeObjectURL(url);
         });
     </script>
 </body>
