@@ -1,0 +1,8 @@
+# Fitxers de dades locals
+notes.md
+*.tmp
+
+# Entorn de Node (si s'utilitzava anteriorment)
+node_modules/
+npm-debug.log
+.DS_Store
