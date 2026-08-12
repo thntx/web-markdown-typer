@@ -73,9 +73,53 @@
         const fallbackFileInput = document.getElementById('fallbackFileInput');
         const STORAGE_KEY = 'simple_editor_content';
         let saveTimeout;
-        let fileHandle = null; // File System Access API handle
+        let fileHandle = null;
 
         document.execCommand('defaultParagraphSeparator', false, 'div');
+
+        // ---- IndexedDB for FileHandle Persistence ----
+
+        const DB_NAME = 'MarkdownEditorDB';
+        const DB_STORE = 'handles';
+
+        function getDB() {
+            return new Promise((resolve, reject) => {
+                const req = indexedDB.open(DB_NAME, 1);
+                req.onupgradeneeded = () => req.result.createObjectStore(DB_STORE);
+                req.onsuccess = () => resolve(req.result);
+                req.onerror = () => reject(req.error);
+            });
+        }
+
+        async function getStoredHandle() {
+            try {
+                const db = await getDB();
+                return new Promise((resolve) => {
+                    const tx = db.transaction(DB_STORE, 'readonly');
+                    const req = tx.objectStore(DB_STORE).get('synced_handle');
+                    req.onsuccess = () => resolve(req.result || null);
+                    req.onerror = () => resolve(null);
+                });
+            } catch { return null; }
+        }
+
+        async function setStoredHandle(handle) {
+            try {
+                const db = await getDB();
+                const tx = db.transaction(DB_STORE, 'readwrite');
+                tx.objectStore(DB_STORE).put(handle, 'synced_handle');
+            } catch {}
+        }
+
+        // ---- Title Status ----
+
+        function updateTitle(hasError = false) {
+            if (fileHandle) {
+                document.title = (hasError ? '⚠️ Error - ' : '● ') + fileHandle.name + ' - Markdown Editor';
+            } else {
+                document.title = 'Simple Markdown Editor';
+            }
+        }
 
         // ---- Caret save / restore ----
 
@@ -136,7 +180,7 @@
             let prefix = '';
             let content = raw;
 
-            // Block-level patterns (checked on raw text)
+            // Block-level patterns
             const blocks = [
                 [/^(#{1,6}) (.*)$/, m => {
                     cls = 'line-h' + Math.min(m[1].length, 3);
@@ -210,10 +254,21 @@
             editor.setAttribute('data-empty', editor.textContent.trim() === '' ? 'true' : 'false');
         }
 
-        // ---- Save / Load ----
+        // ---- Save / Load Core ----
 
         function getMarkdown() {
             return Array.from(editor.children).map(b => b.textContent).join('\n\n');
+        }
+
+        async function verifyPermission(handle) {
+            const opts = { mode: 'readwrite' };
+            try {
+                if ((await handle.queryPermission(opts)) === 'granted') return true;
+                if ((await handle.requestPermission(opts)) === 'granted') return true;
+            } catch (e) {
+                console.error('Error sol·licitant permís:', e);
+            }
+            return false;
         }
 
         async function saveContent() {
@@ -222,11 +277,18 @@
 
             if (fileHandle) {
                 try {
+                    const hasPerm = await verifyPermission(fileHandle);
+                    if (!hasPerm) {
+                        updateTitle(true);
+                        return;
+                    }
                     const writable = await fileHandle.createWritable();
                     await writable.write(md);
                     await writable.close();
+                    updateTitle(false);
                 } catch (err) {
                     console.error('Error desant al fitxer sincronitzat:', err);
+                    updateTitle(true);
                 }
             }
         }
@@ -249,8 +311,23 @@
             updatePlaceholder();
         }
 
-        // Auto-load on init from localStorage
+        // Auto-load on init from localStorage / Stored File Handle
         loadIntoEditor(localStorage.getItem(STORAGE_KEY) || '');
+
+        (async () => {
+            const restoredHandle = await getStoredHandle();
+            if (restoredHandle) {
+                fileHandle = restoredHandle;
+                try {
+                    const file = await fileHandle.getFile();
+                    const text = await file.text();
+                    loadIntoEditor(text);
+                    updateTitle();
+                } catch (e) {
+                    console.log('Handle emmagatzemat no vàlid:', e);
+                }
+            }
+        })();
 
         // ---- Sync File (Ctrl+Q) ----
 
@@ -264,13 +341,30 @@
                         }],
                         multiple: false
                     });
+
+                    // Explicitly request write permissions during user activation gesture
+                    const opts = { mode: 'readwrite' };
+                    if ((await handle.queryPermission(opts)) !== 'granted') {
+                        const perm = await handle.requestPermission(opts);
+                        if (perm !== 'granted') {
+                            alert("⚠️ Cal concedir permís d'escriptura per sincronitzar el fitxer en temps real.");
+                            return;
+                        }
+                    }
+
                     fileHandle = handle;
+                    await setStoredHandle(handle);
+
                     const file = await fileHandle.getFile();
                     const text = await file.text();
                     loadIntoEditor(text);
+                    updateTitle();
                     await saveContent();
                 } catch (err) {
-                    if (err.name !== 'AbortError') console.error(err);
+                    if (err.name !== 'AbortError') {
+                        console.error('Error durant la sincronització:', err);
+                        alert("⚠️ Error en obrir o sincronitzar el fitxer.");
+                    }
                 }
             } else {
                 fallbackFileInput.click();
