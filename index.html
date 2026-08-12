@@ -32,7 +32,7 @@
         #editor > div { margin-bottom: 0.6em; min-height: 1.3em; }
 
         #editor[data-empty="true"]::before {
-            content: "Start typing...";
+            content: "Start typing... (Ctrl+Q to sync file)";
             color: #444;
             pointer-events: none;
             position: absolute;
@@ -73,11 +73,14 @@
 </head>
 <body>
     <div id="editor" contenteditable="true" role="textbox" aria-multiline="true" spellcheck="true" lang="en" data-empty="true"></div>
+    <input type="file" id="fallbackFileInput" accept=".md,.txt,.markdown" style="display:none">
 
     <script>
         const editor = document.getElementById('editor');
+        const fallbackFileInput = document.getElementById('fallbackFileInput');
         const STORAGE_KEY = 'simple_editor_content';
         let saveTimeout;
+        let fileHandle = null; // File System Access API handle
 
         document.execCommand('defaultParagraphSeparator', false, 'div');
 
@@ -220,9 +223,19 @@
             return Array.from(editor.children).map(b => b.textContent).join('\n\n');
         }
 
-        function saveContent() {
+        async function saveContent() {
             const md = getMarkdown();
             localStorage.setItem(STORAGE_KEY, md);
+
+            if (fileHandle) {
+                try {
+                    const writable = await fileHandle.createWritable();
+                    await writable.write(md);
+                    await writable.close();
+                } catch (err) {
+                    console.error('Error desant al fitxer sincronitzat:', err);
+                }
+            }
         }
 
         function loadIntoEditor(md) {
@@ -245,6 +258,49 @@
 
         // Auto-load on init from localStorage
         loadIntoEditor(localStorage.getItem(STORAGE_KEY) || '');
+
+        // ---- Sync File (Ctrl+Q) ----
+
+        async function syncLocalFile() {
+            if ('showOpenFilePicker' in window) {
+                try {
+                    const [handle] = await window.showOpenFilePicker({
+                        types: [{
+                            description: 'Fitxers Markdown',
+                            accept: { 'text/markdown': ['.md', '.markdown', '.txt'] }
+                        }],
+                        multiple: false
+                    });
+                    fileHandle = handle;
+                    const file = await fileHandle.getFile();
+                    const text = await file.text();
+                    loadIntoEditor(text);
+                    await saveContent();
+                } catch (err) {
+                    if (err.name !== 'AbortError') console.error(err);
+                }
+            } else {
+                fallbackFileInput.click();
+            }
+        }
+
+        fallbackFileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (evt) => {
+                loadIntoEditor(evt.target.result);
+                saveContent();
+            };
+            reader.readAsText(file);
+        });
+
+        document.addEventListener('keydown', (e) => {
+            if ((e.ctrlKey || e.metaKey) && (e.key === 'q' || e.key === 'Q')) {
+                e.preventDefault();
+                syncLocalFile();
+            }
+        });
 
         // ---- Input handler ----
 
